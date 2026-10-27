@@ -1,0 +1,4 @@
+PARCHE BOSS SONIC.EXE
+Copia todo el contenido encima de la carpeta del proyecto (la que tiene SonicExe67.yyp), aceptando reemplazar.
+Si ya modificaste SonicExe67.yyp o SonicExe67.resource_order, no los reemplaces: agrega a mano las 8 lineas de spr_cr2_counter, catk, tele, fall, adown, crouch, menu y lose.
+No probado: si GameMaker marca un error, mandame el mensaje exacto.

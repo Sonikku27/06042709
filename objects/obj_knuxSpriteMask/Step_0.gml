@@ -13,7 +13,7 @@ if (keyboard_check_released(vk_left))
     image_speed = 0.15;
 }
 
-if (keyboard_check(ord("X")))
+if (keyboard_check(ord("X")) && !global.net_skin_on)   // con skin Sonic / Amy el golpe lo maneja obj_skin
 {
     if (sprite_index == spr_knuxIdleLeft)
     {

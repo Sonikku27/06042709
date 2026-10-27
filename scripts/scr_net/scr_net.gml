@@ -231,7 +231,10 @@ function emo_draw_dance(_skin, _t, _face, _x, _y) {
     var _spr = (_skin == 1) ? spr_mpAmyDance : spr_mpSonicDance;
     var _n = sprite_get_number(_spr);
     var _f = floor(_t * ((_skin == 1) ? 0.33 : 0.25)) mod _n;
+    var _tf = gpu_get_texfilter();
+    gpu_set_texfilter(false);   // pixeles nitidos (sin blur), igual que net_draw_skin
     draw_sprite_ext(_spr, _f, _x, _y, _face ? HP_SCALE : -HP_SCALE, HP_SCALE, 0, c_white, 1);
+    gpu_set_texfilter(_tf);
 }
 
 

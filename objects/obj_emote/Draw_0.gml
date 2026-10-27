@@ -15,7 +15,10 @@ if (kiss_pair && _rm) {
     var _sx = (_my == 0) ? _lx : _rx;     // x de Sonic
     var _ax = (_my == 0) ? _rx : _lx;     // x de Amy
     var _flip = (_ax < _sx) ? -1 : 1;     // Sonic a la izquierda, Amy a la derecha
+    var _tf = gpu_get_texfilter();
+    gpu_set_texfilter(false);   // pixeles nitidos (sin blur)
     draw_sprite_ext(spr_mpKiss, 0, (_lx + _rx) / 2, max(_ly, _ry), HP_SCALE * _flip, HP_SCALE, 0, c_white, 1);
+    gpu_set_texfilter(_tf);
     exit;
 }
 

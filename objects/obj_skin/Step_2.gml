@@ -18,13 +18,7 @@ if (_p.hp_on) {
     face = (_p.hp_face > 0) ? 1 : 0;
     var _a = _p.hp_anim;
     var _i = _p.hp_frame;
-    // golpe de Knuckles (X): animacion vieja
-    if (net_is_punch_sprite(_m.sprite_index)) {
-        if (anim != NA_PUNCH) idx = 0;
-        else idx += net_anim_speed(NA_PUNCH);
-        _a = NA_PUNCH;
-        _i = idx;
-    }
+    // (el golpe viejo de Knuckles ya no se usa con Sonic / Amy: ahora X usa sus sprites de ataque, ver mas abajo)
     // pelea contra el jefe: postura de pelea (solo Sonic) y ataques (X)
     var _sk = net_skin_id(global.net_skin);
     if (instance_exists(obj_fightp) && instance_exists(obj_boss) && _sk == 0
@@ -37,7 +31,26 @@ if (_p.hp_on) {
         _a = obj_fightp.atk_air ? NA_ATKA : NA_ATKG;
         _i = net_atk_frame(_sk, obj_fightp.atk_air, _el);
     }
-    if (_p.hp_hurt > 0 || _p.hp_dead) { _a = NA_HURT; _i = 0; }
+    // niveles de Knuckles (ej. You Can't Run): X ataca en el suelo o en el aire con los mismos sprites
+    // de ataque que usan Sonic y Amy en la pelea contra el jefe
+    if (katk_cd > 0) katk_cd--;
+    if (katk_t > 0) katk_t--;
+    if (global.character == "knux" && !instance_exists(obj_fightp)) {
+        var _kblock = instance_exists(obj_net) && (obj_net.chat_open || obj_net.gate_wait);
+        if (katk_t <= 0 && katk_cd <= 0 && !_kblock && !_p.hp_emote && !_p.hp_freeze
+            && !_p.hp_dead && _p.hp_hurt <= 0 && keyboard_check_pressed(ord("X"))) {
+            katk_air = !_p.hp_ground;
+            katk_len = net_atk_len(_sk, katk_air);
+            katk_t = katk_len;
+            katk_cd = 4;
+            audio_play_sound(snd_knuxPunch, 10, false);
+        }
+        if (katk_t > 0) {
+            _a = katk_air ? NA_ATKA : NA_ATKG;
+            _i = net_atk_frame(_sk, katk_air, katk_len - katk_t);
+        }
+    } else katk_t = 0;
+    if (_p.hp_hurt > 0 || _p.hp_dead) { katk_t = 0; _a = NA_HURT; _i = 0; }
     // esperando a la pareja: quieto, girando en loop (salto / spindash)
     var _gw = instance_exists(obj_net) && obj_net.gate_wait;
     if (_gw) {

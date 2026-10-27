@@ -26,6 +26,16 @@
 #macro BA_BLAST 8
 #macro BA_ENTR 9
 #macro MSG_BLAST 14
+#macro BA_COUNTER 10   // pose lenta del contraataque
+#macro BA_CATK 11      // ataque del contraataque (zona invisible delante)
+#macro BA_TELE 12      // teletransporte
+#macro BA_FALL 13      // cayendo
+#macro BA_ADOWN 14     // ataque aereo hacia abajo
+#macro BA_CROUCH 15    // al aterrizar
+// cajas de golpe del jefe [x1,y1,x2,y2] en px de sprite relativos a los pies, mirando a la derecha
+#macro CR_CATK_BOX [21, -36, 61, 0]
+#macro CR_ADOWN_BOX_A [-10, -29, 21, 3]   // frame 2
+#macro CR_ADOWN_BOX_B [-19, -27, 19, 3]   // frames 3 y 4
 
 // el perseguidor atrapo a alguien (o se acabo su tiempo): empieza la pelea
 function fight_caught() {
@@ -115,13 +125,13 @@ function boss_take_hit(_dir) {
         _b.st = 5;
         _b.vx = 0;
     } else if (_b.st == 0 || _b.st == 4) {
-        // a veces contraataca en vez de quedarse aturdido
+        // a veces contraataca: pose lenta, aparece detras del jugador y ataca (zona invisible delante)
         if (_b.counter_cd <= 0 && random(1) < (_b.rage ? 0.6 : 0.35)) {
-            _b.counter_cd = 70;
-            _b.face = -_dir;
+            _b.counter_cd = 110;
+            _b.st = 7;
+            _b.st_t = 0;
+            _b.vx = 0;
             _b.hit_done = [false, false];
-            if (random(1) < 0.5) { _b.st = 1; _b.st_t = 0; _b.combo = 0; _b.vx = 0; }
-            else { _b.st = 2; _b.st_t = 18; _b.vx = _b.face * 24; }
         } else {
             _b.st = 4;
             _b.st_t = 7;

@@ -94,6 +94,15 @@ if (room == rm_select1 && global.net_state != "ingame") {
     }
 }
 
+// ---- seleccion de nivel: Sonic.EXE (loop) en lugar de Tails
+if (room == rm_select1 && global.net_state == "ingame") {
+    var _k = _gw / 640;
+    var _tfs = gpu_get_texfilter();
+    gpu_set_texfilter(false);
+    draw_sprite_ext(spr_cr2_menu, (current_time div 140) mod 4, 105 * _k, 306 * _k, 2 * _k, 2 * _k, 0, c_white, 1);
+    gpu_set_texfilter(_tfs);
+}
+
 // ---- chat (esquina inferior izquierda)
 draw_set_halign(fa_left);
 draw_set_valign(fa_bottom);

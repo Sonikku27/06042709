@@ -34,3 +34,9 @@ if (is_host) {
     ty = y;
 }
 audio_play_sound(snd_static, 10, false);
+
+gy = y;                 // altura del suelo de la arena
+xmin = ax - 250;        // limites del teletransporte (dentro de las paredes invisibles)
+xmax = ax + 270;
+dive = false;           // el salto termina en ataque aereo hacia abajo
+air_prev = false;       // estaba en el aire el step anterior (para el aterrizaje)

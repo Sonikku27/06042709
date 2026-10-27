@@ -10,6 +10,12 @@ switch (anim) {
     case BA_ENTR: _spr = spr_cr2_entrance; break;
     case BA_HURT: _spr = spr_cr2_hurt; break;
     case BA_DOWN: _spr = spr_cr2_dead; break;
+    case BA_COUNTER: _spr = spr_cr2_counter; break;
+    case BA_CATK: _spr = spr_cr2_catk; break;
+    case BA_TELE: _spr = spr_cr2_tele; break;
+    case BA_FALL: _spr = spr_cr2_fall; break;
+    case BA_ADOWN: _spr = spr_cr2_adown; break;
+    case BA_CROUCH: _spr = spr_cr2_crouch; break;
 }
 var _a = (flash && ((current_time div 70) mod 2 == 0)) ? 0.5 : 1;
 var _tf = gpu_get_texfilter();

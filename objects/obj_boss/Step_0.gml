@@ -32,6 +32,8 @@ if (is_host) {
     var _px = [_hx, obj_net.remote.tx];
     var _py = [_hy, obj_net.remote.ty];
     var _gr = !place_free(x, y + 1);
+    var _landed = (_gr && air_prev);   // acaba de aterrizar
+    air_prev = !_gr;
     rage = (bhp <= BOSS_HP_MAX * 0.35);
     var _cd = rage ? 3 : 8;   // pausa entre ataques
 
@@ -53,6 +55,7 @@ if (is_host) {
 
         switch (st) {
             case 0:   // correr hacia el jugador / decidir ataque
+                if (_landed) { st = 11; st_t = 0; vx = 0; break; }   // aterrizo: se agacha
                 if (_t >= 0) face = (_dx >= 0) ? 1 : -1;
                 vx = (abs(_dx) > 90) ? face * 11 : 0;
                 st_t--;
@@ -61,12 +64,14 @@ if (is_host) {
                     var _near = (abs(_dx) < 140 && abs(_dy) < 110);
                     hit_done = [false, false];
                     air_atk = false;
+                    dive = false;
                     air_f = 0;
                     combo = 0;
-                    if (_near) {
+                    if (random(1) < (rage ? 0.2 : 0.12)) { st = 9; st_t = 0; vx = 0; }   // teletransporte
+                    else if (_near) {
                         if (_r < 0.45) { st = 1; st_t = 0; vx = 0; }
                         else if (_r < 0.65) { st = 2; st_t = 24; vx = face * 24; }
-                        else if (_r < 0.85) { st = 3; st_t = 0; vy = -24; vx = face * 8; air_atk = true; }
+                        else if (_r < 0.85) { st = 3; st_t = 0; vy = -24; vx = face * 8; air_atk = true; dive = (random(1) < 0.5); }
                         else { st = 6; st_t = 0; vx = 0; }
                     } else {
                         if (_r < 0.35) { st = 2; st_t = 24; vx = face * 24; }
@@ -116,6 +121,8 @@ if (is_host) {
 
             case 3:   // salto: se apunta en el aire; ataque aereo (tajo) o caida giratoria
                 st_t++;
+                // en lo alto del salto: ataque aereo hacia abajo
+                if (air_atk && dive && !_gr && vy > -6) { st = 10; st_t = 0; vx = 0; vy = 0; hit_done = [false, false]; break; }
                 if (_t >= 0) { vx = sign(_dx) * ((abs(_dx) > 40) ? 12 : 4); face = (_dx >= 0) ? 1 : -1; }
                 if (air_atk && !_gr && vy > -10) air_f++;
                 var _hit_air = false;
@@ -131,13 +138,106 @@ if (is_host) {
                         }
                     }
                 }
-                if (_gr && vy >= 0 && st_t > 3) { st = 0; st_t = _cd + 4; vx = 0; air_f = 0; }
+                if (_gr && vy >= 0 && st_t > 3) { st = 11; st_t = 0; vx = 0; air_f = 0; }   // aterriza agachado
                 break;
 
             case 4:   // golpeado
                 st_t--;
                 vx *= 0.8;
                 if (st_t <= 0) { st = 0; st_t = 3; }
+                break;
+
+            case 7:   // contraataque: pose lenta y despues aparece detras del jugador
+                vx = 0;
+                if (_t >= 0) face = (_dx >= 0) ? 1 : -1;
+                st_t++;
+                if (st_t >= 20) {
+                    if (_t >= 0) {
+                        var _sd = (_px[_t] >= x) ? 1 : -1;      // el jugador esta de este lado del jefe
+                        var _nx = _px[_t] + _sd * 80;           // aparece del lado contrario (detras de ti)
+                        if (_nx < xmin || _nx > xmax) _nx = _px[_t] - _sd * 80;
+                        x = clamp(_nx, xmin, xmax);
+                        y = gy;
+                        face = (_px[_t] >= x) ? 1 : -1;
+                    }
+                    vy = 0;
+                    st = 8; st_t = 0;
+                    hit_done = [false, false];
+                }
+                break;
+
+            case 8:   // ataque del contraataque: zona invisible a distancia (la hitbox de la hoja)
+                vx = 0;
+                st_t++;
+                if (st_t >= 3 && st_t <= 9) {
+                    var _cb = CR_CATK_BOX;
+                    var _c1 = x + face * _cb[0] * HP_SCALE;
+                    var _c2 = x + face * _cb[2] * HP_SCALE;
+                    var _cf = y + net_feet(global.character);
+                    for (var i = 0; i < 2; i++) {
+                        if (php[i] > 0 && !hit_done[i]) {
+                            if (_px[i] + 24 > min(_c1, _c2) && _px[i] - 24 < max(_c1, _c2)
+                                && _py[i] + 40 > _cf + _cb[1] * HP_SCALE && _py[i] - 40 < _cf + _cb[3] * HP_SCALE) {
+                                hit_done[i] = true;
+                                boss_try_hit(i, face);
+                            }
+                        }
+                    }
+                }
+                if (st_t >= 16) { st = 0; st_t = _cd; }
+                break;
+
+            case 9:   // teletransporte: desaparece, reaparece en otro punto de la arena
+                vx = 0; vy = 0;
+                st_t++;
+                if (st_t == 8) {
+                    var _tx2;
+                    if (_t >= 0 && random(1) < 0.6) _tx2 = _px[_t] + choose(-1, 1) * random_range(90, 260);
+                    else _tx2 = random_range(xmin, xmax);
+                    var _ty2 = gy;
+                    // desde el suelo puede subir; en el aire puede ir a cualquier altura (tambien abajo)
+                    if (_gr) { if (random(1) < 0.45) _ty2 = gy - random_range(70, 200); }
+                    else { if (random(1) < 0.7) _ty2 = gy - random_range(40, 200); }
+                    x = clamp(_tx2, xmin, xmax);
+                    y = _ty2;
+                    if (_t >= 0) face = (_px[_t] >= x) ? 1 : -1;
+                }
+                if (st_t >= 14) {
+                    if (y < gy - 20 && random(1) < 0.5) { st = 10; st_t = 0; hit_done = [false, false]; }
+                    else { st = 0; st_t = _cd; }
+                }
+                break;
+
+            case 10:   // ataque aereo hacia abajo: se prepara, cae rapido y se queda en el ultimo frame hasta tocar el suelo
+                st_t++;
+                if (st_t < 8) {
+                    vx = 0; vy = 0;
+                    if (_t >= 0) face = (_dx >= 0) ? 1 : -1;
+                } else {
+                    if (st_t == 8) vy = 22;
+                    vx = face * 8;
+                    vy = min(vy, 30);
+                    var _db = (st_t < 12) ? CR_ADOWN_BOX_A : CR_ADOWN_BOX_B;
+                    var _d1 = x + face * _db[0] * HP_SCALE;
+                    var _d2 = x + face * _db[2] * HP_SCALE;
+                    var _df = y + net_feet(global.character);
+                    for (var i = 0; i < 2; i++) {
+                        if (php[i] > 0 && !hit_done[i]) {
+                            if (_px[i] + 24 > min(_d1, _d2) && _px[i] - 24 < max(_d1, _d2)
+                                && _py[i] + 40 > _df + _db[1] * HP_SCALE && _py[i] - 40 < _df + _db[3] * HP_SCALE) {
+                                hit_done[i] = true;
+                                boss_try_hit(i, face);
+                            }
+                        }
+                    }
+                    if (_gr && st_t > 9) { st = 11; st_t = 0; vx = 0; vy = 0; }
+                }
+                break;
+
+            case 11:   // agachado al aterrizar
+                vx = 0;
+                st_t++;
+                if (st_t >= 9) { st = 0; st_t = _cd; }
                 break;
 
             case 6:   // rafaga de energia: carga 14 steps, dispara, se recupera
@@ -188,14 +288,23 @@ if (is_host) {
     // ---- animacion que se manda al cliente
     bframe = 0;
     switch (st) {
-        case 0: anim = (abs(vx) > 0.5) ? BA_WALK : BA_IDLE; break;
+        case 0:
+            if (!_gr) { anim = BA_FALL; bframe = (ph_t div 3) mod 3; }
+            else anim = (abs(vx) > 0.5) ? BA_WALK : BA_IDLE;
+            break;
         case 1: anim = BA_PUNCH; bframe = min(5, st_t div 4); break;
         case 2: anim = BA_ROLL; break;
         case 3:
             if (air_atk && air_f > 0) { anim = BA_AIR; bframe = min(6, air_f div 3); }
+            else if (vy > 2) { anim = BA_FALL; bframe = (ph_t div 3) mod 3; }
             else anim = BA_JUMP;
             break;
         case 4: anim = BA_HURT; break;
+        case 7: anim = BA_COUNTER; bframe = (st_t div 5) mod 2; break;
+        case 8: anim = BA_CATK; break;
+        case 9: anim = BA_TELE; break;
+        case 10: anim = BA_ADOWN; bframe = (st_t < 4) ? 0 : ((st_t < 8) ? 1 : min(4, 2 + (st_t - 8) div 2)); break;
+        case 11: anim = BA_CROUCH; break;
         case 6: anim = BA_BLAST; bframe = (st_t < 14) ? 0 : 1; break;
         default: anim = BA_DOWN; break;
     }
@@ -220,8 +329,8 @@ if (is_host) {
     }
 } else {
     // ---------------------------------------------------------- CLIENTE: solo sigue al host
-    x = lerp(x, tx, 0.5);
-    y = lerp(y, ty, 0.5);
+    if (abs(tx - x) > 100 || abs(ty - y) > 100) { x = tx; y = ty; }   // teletransporte: sin deslizarse
+    else { x = lerp(x, tx, 0.5); y = lerp(y, ty, 0.5); }
 }
 
 // animacion de los sprites
@@ -229,6 +338,6 @@ switch (anim) {
     case BA_IDLE: idx += 0.12; break;
     case BA_WALK: idx += 0.4; break;
     case BA_ROLL: case BA_JUMP: idx += 0.6; break;
-    case BA_PUNCH: case BA_AIR: case BA_BLAST: case BA_ENTR: idx = bframe; break;
+    case BA_PUNCH: case BA_AIR: case BA_BLAST: case BA_ENTR: case BA_COUNTER: case BA_FALL: case BA_ADOWN: idx = bframe; break;
     default: idx = 0;
 }

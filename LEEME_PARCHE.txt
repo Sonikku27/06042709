@@ -1,0 +1,12 @@
+PARCHE BOSS SONIC.EXE v2  (se aplica sobre 06042709-main)
+
+Copia todo el contenido encima de la carpeta del proyecto (la que tiene SonicExe67.yyp), aceptando reemplazar.
+SonicExe67.yyp y SonicExe67.resource_order: comparados con tu 06042709-main solo cambian en las 8 lineas de sprites nuevos
+(spr_cr2_counter, catk, tele, fall, adown, crouch, menu, lose). Si ya los tocaste, no los reemplaces y agrega esas 8 lineas a mano.
+
+Incluye el parche anterior del boss (Parche_Boss (1)) mas estos cambios:
+ 1. obj_boss/Step_0: los jugadores se vuelven no-solidos mientras el jefe se mueve, asi no puede pararse encima de ellos.
+ 2. spr_select2 y spr_select3: el retrato de LOSE de Sonic.EXE ahora ocupa toda la caja (160x112) y se ve completo.
+ 3. obj_selectStatic/Create_0: visible = false, sin estatica sobre los retratos.
+
+No probado: no puedo ejecutar GameMaker. Si marca un error, mandame el mensaje exacto.

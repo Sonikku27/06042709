@@ -31,6 +31,9 @@ if (is_host) {
     var _hy = instance_exists(obj_playerMain) ? obj_playerMain.y : y;
     var _px = [_hx, obj_net.remote.tx];
     var _py = [_hy, obj_net.remote.ty];
+    // los jugadores son solidos: se apagan mientras el jefe se mueve para que no pueda pararse encima de ellos
+    var _psol = false;
+    if (instance_exists(obj_playerMain)) { _psol = obj_playerMain.solid; obj_playerMain.solid = false; }
     var _gr = !place_free(x, y + 1);
     var _landed = (_gr && air_prev);   // acaba de aterrizar
     air_prev = !_gr;
@@ -284,6 +287,7 @@ if (is_host) {
         if (place_free(x, y + _sy)) y += _sy;
         else { vy = 0; break; }
     }
+    if (instance_exists(obj_playerMain)) obj_playerMain.solid = _psol;
 
     // ---- animacion que se manda al cliente
     bframe = 0;
